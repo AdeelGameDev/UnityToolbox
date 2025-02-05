@@ -11,9 +11,8 @@ public static class VersionCodeAutoIncrement
 
     static VersionCodeAutoIncrement()
     {
-        // Load the saved toggle state
         _isEnabled = EditorPrefs.GetBool(MenuName, true);
-        UnityEditor.Menu.SetChecked(MenuName, _isEnabled);
+        Menu.SetChecked(MenuName, _isEnabled);
         EditorApplication.delayCall += () => ToggleAction(_isEnabled);
     }
 
@@ -22,7 +21,7 @@ public static class VersionCodeAutoIncrement
     {
         _isEnabled = !_isEnabled;
         EditorPrefs.SetBool(MenuName, _isEnabled);
-        UnityEditor.Menu.SetChecked(MenuName, _isEnabled);
+        Menu.SetChecked(MenuName, _isEnabled);
         ToggleAction(_isEnabled);
     }
 
@@ -30,12 +29,10 @@ public static class VersionCodeAutoIncrement
     {
         if (enabled)
         {
-            // Hook into the build process
             BuildPlayerWindow.RegisterBuildPlayerHandler(IncrementVersionCodeAndBuild);
         }
         else
         {
-            // Restore default build behavior
             BuildPlayerWindow.RegisterBuildPlayerHandler(BuildPlayerWindow.DefaultBuildMethods.BuildPlayer);
         }
     }
@@ -44,16 +41,19 @@ public static class VersionCodeAutoIncrement
     {
         if (EditorUserBuildSettings.activeBuildTarget == BuildTarget.Android)
         {
-            // Get current version code
-            int currentVersionCode = PlayerSettings.Android.bundleVersionCode;
-
-            // Increment by 1 (or any logic you prefer)
-            int newVersionCode = currentVersionCode + 1;
-            PlayerSettings.Android.bundleVersionCode = newVersionCode;
-            Debug.Log($"Auto-incremented Bundle Version Code to: {newVersionCode}");
+            if (EditorUserBuildSettings.buildAppBundle)
+            {
+                int currentVersionCode = PlayerSettings.Android.bundleVersionCode;
+                int newVersionCode = currentVersionCode + 1;
+                PlayerSettings.Android.bundleVersionCode = newVersionCode;
+                Debug.Log($"Auto-incremented Bundle Version Code to: {newVersionCode} (AAB build)");
+            }
+            else
+            {
+                Debug.Log("Skipping Bundle Version Code increment: APK build detected");
+            }
         }
 
-        // Proceed with the build
         BuildPlayerWindow.DefaultBuildMethods.BuildPlayer(options);
     }
 }
