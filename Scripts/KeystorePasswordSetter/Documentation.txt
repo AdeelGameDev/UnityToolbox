@@ -1,0 +1,29 @@
+Unity Keystore Password Automation Guide
+This guide explains how to automate setting Android keystore passwords in Unity using a C# script and a batch file (.bat).
+
+1. Import the Script into Unity
+Open your Unity project.
+In the Assets folder, create a new folder named Editor (if it doesn't already exist).
+Copy the KeystorePasswordSetter.cs file into the Editor folder.
+Unity will automatically detect and compile the script.
+2. Configure the Batch File (LaunchUnity.bat)
+Steps to Use:
+Open LaunchUnity.bat in a text editor.
+Modify the Unity Editor path to match your installed Unity version.
+Modify the Unity project path to match your project location.
+Save the file and double-click it to launch Unity with the required settings.
+3. How It Works Together
+Import KeystorePasswordSetter.cs into Unity and place it inside the Editor folder.
+Run LaunchUnity.bat, which:
+Sets UNITY_KEYSTORE_PASS and UNITY_KEYALIAS_PASS as environment variables.
+Launches Unity with the specified project.
+Unity Executes KeystorePasswordSetter.cs, which:
+Reads the environment variables.
+Automatically applies the passwords to Unity’s Android Player Settings.
+Keystore is Ready for Android Builds, allowing password automation without manual input.
+4. Notes
+✔ Ensure KeystorePasswordSetter.cs is inside an Editor folder in your Unity project.
+✔ Update the Unity paths in the .bat file before running it.
+✔ This setup helps automate password management without storing sensitive information in Unity.
+
+Your Android keystore signing process is now automated and secure!
