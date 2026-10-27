@@ -1,8 +1,0 @@
- // Handling world to screen conversion and instantiating
-        Vector2 positionOnScreen = overLayCamera.WorldToViewportPoint(collectible.transform.position);
-        Vector2 pos = new Vector2((positionOnScreen.x * canvas_rect.sizeDelta.x) - (canvas_rect.sizeDelta.x * 0.5f),
-                   (positionOnScreen.y * canvas_rect.sizeDelta.y) - (canvas_rect.sizeDelta.y * 0.5f));
-
-        RectTransform spawnUIRect = Instantiate(collectableSpawnUI, canvas_rect.transform);
-        spawnUIRect.anchoredPosition = pos;
-        spawnUIRect.DOJumpAnchorPos(targetRect.anchoredPosition,10,1,10);

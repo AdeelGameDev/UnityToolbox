@@ -1,0 +1,62 @@
+{
+  "name": "com.adeel.unitytoolbox",
+  "version": "1.0.0",
+  "displayName": "Unity Toolbox",
+  "description": "A curated toolbox of battle-tested Unity runtime scripts and editor tools: object pooling, singletons, slow motion, FPS counter, UI anchor fixing, bootstrap scene automation, Android version-code incrementing, asset audits and more.",
+  "unity": "2021.3",
+  "keywords": [
+    "unity",
+    "toolbox",
+    "tools",
+    "editor",
+    "utilities",
+    "productivity",
+    "object-pool",
+    "singleton"
+  ],
+  "author": {
+    "name": "Adeel Bashir",
+    "url": "https://github.com/AdeelGameDev"
+  },
+  "license": "MIT",
+  "documentationUrl": "https://github.com/AdeelGameDev/UnityToolbox#readme",
+  "changelogUrl": "https://github.com/AdeelGameDev/UnityToolbox/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/AdeelGameDev/UnityToolbox/blob/main/LICENSE",
+  "samples": [
+    {
+      "displayName": "Firebase Auth + Realtime Database",
+      "description": "Email/password registration and sign-in with a role stored in the Realtime Database. Requires the Firebase Unity SDK.",
+      "path": "Samples~/FirebaseRealtimeDatabase"
+    },
+    {
+      "displayName": "QR Code Scanner",
+      "description": "Webcam QR scanning into a TextMeshPro label. Requires ZXing.Net.",
+      "path": "Samples~/QRCodeScanner"
+    },
+    {
+      "displayName": "Input System Pinch / Scroll Zoom",
+      "description": "Pinch-to-zoom and mouse-wheel zoom built on the Unity Input System package.",
+      "path": "Samples~/InputSystemPinchZoom"
+    },
+    {
+      "displayName": "Audio Manager",
+      "description": "Background-music and sound-effect manager with a ready-made prefab.",
+      "path": "Samples~/AudioManager"
+    },
+    {
+      "displayName": "JSON Schema Migration",
+      "description": "Example of migrating a legacy JSON payload into a new schema. Adapt to your own data.",
+      "path": "Samples~/JsonSchemaMigration"
+    },
+    {
+      "displayName": "Android Keystore Password Automation",
+      "description": "Inject keystore and key-alias passwords from environment variables so they never live in the project.",
+      "path": "Samples~/AndroidKeystorePasswords"
+    },
+    {
+      "displayName": "Unity Library Cleaner (Windows)",
+      "description": "Standalone .bat that deletes the regenerable Library folder from every Unity project under a directory.",
+      "path": "Samples~/UnityLibraryCleaner"
+    }
+  ]
+}

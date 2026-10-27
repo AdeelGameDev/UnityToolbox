@@ -1,85 +1,125 @@
 using UnityEngine;
 using UnityEditor;
 
-public class AssetMaterialAudit : EditorWindow
+namespace Adeel.UnityToolbox.EditorTools
 {
-    [MenuItem("Tools/Asset Audit/Missing Materials Scan")]
-    public static void RunAudit()
+    /// <summary>
+    /// Finds renderers whose material slot is empty or points at a missing
+    /// material, in both the open scenes and every prefab in the project.
+    /// </summary>
+    /// <remarks>
+    /// Results are written to the Console and clicking a log line pings the
+    /// offending object. Handy right before a build or a store submission.
+    /// </remarks>
+    public static class AssetMaterialAudit
     {
-        Debug.Log("=== STARTING ASSET MATERIAL AUDIT ===");
-
-        ScanScene();
-        ScanPrefabs();
-
-        Debug.Log("=== AUDIT COMPLETE ===");
-    }
-
-    static void ScanScene()
-    {
-        Debug.Log("--- SCENE SCAN ---");
-
-        Renderer[] sceneRenderers = GameObject.FindObjectsOfType<Renderer>(true);
-
-        foreach (Renderer r in sceneRenderers)
+        [MenuItem("Tools/Unity Toolbox/Asset Audit/Find Missing Materials")]
+        public static void RunAudit()
         {
-            if (HasMissingMaterial(r))
-            {
-                Debug.Log("Scene issue: " + GetPath(r.gameObject), r.gameObject);
-            }
+            Debug.Log("=== Asset material audit started ===");
+
+            int issues = ScanScene() + ScanPrefabs();
+
+            Debug.Log(issues == 0
+                ? "=== Audit complete: no missing materials ==="
+                : $"=== Audit complete: {issues} issue(s) found ===");
         }
-    }
 
-    static void ScanPrefabs()
-    {
-        Debug.Log("--- PREFAB SCAN ---");
-
-        string[] prefabGUIDs = AssetDatabase.FindAssets("t:Prefab");
-
-        foreach (string guid in prefabGUIDs)
+        private static int ScanScene()
         {
-            string path = AssetDatabase.GUIDToAssetPath(guid);
-            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            Debug.Log("--- Scene scan ---");
 
-            if (prefab == null) continue;
+            int issues = 0;
 
-            Renderer[] renderers = prefab.GetComponentsInChildren<Renderer>(true);
+            // FindObjectsOfType keeps this compatible with Unity 2021.3; the newer
+            // FindObjectsByType overloads only exist from 2022.2 onwards.
+#pragma warning disable CS0618
+            Renderer[] sceneRenderers = Object.FindObjectsOfType<Renderer>(true);
+#pragma warning restore CS0618
 
-            foreach (Renderer r in renderers)
+            foreach (Renderer renderer in sceneRenderers)
             {
-                if (HasMissingMaterial(r))
+                if (!HasMissingMaterial(renderer))
                 {
-                    Debug.Log("Prefab issue: " + path + " -> " + GetPath(r.gameObject), prefab);
+                    continue;
+                }
+
+                Debug.Log($"Scene issue: {GetPath(renderer.gameObject)}", renderer.gameObject);
+                issues++;
+            }
+
+            return issues;
+        }
+
+        private static int ScanPrefabs()
+        {
+            Debug.Log("--- Prefab scan ---");
+
+            int issues = 0;
+            string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab");
+
+            foreach (string guid in prefabGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+
+                if (prefab == null)
+                {
+                    continue;
+                }
+
+                foreach (Renderer renderer in prefab.GetComponentsInChildren<Renderer>(true))
+                {
+                    if (!HasMissingMaterial(renderer))
+                    {
+                        continue;
+                    }
+
+                    Debug.Log($"Prefab issue: {path} -> {GetPath(renderer.gameObject)}", prefab);
+                    issues++;
                 }
             }
+
+            return issues;
         }
-    }
 
-    static bool HasMissingMaterial(Renderer r)
-    {
-        if (r == null) return false;
-
-        if (r.sharedMaterials == null || r.sharedMaterials.Length == 0)
-            return true;
-
-        foreach (Material m in r.sharedMaterials)
+        private static bool HasMissingMaterial(Renderer renderer)
         {
-            if (m == null)
+            if (renderer == null)
+            {
+                return false;
+            }
+
+            Material[] materials = renderer.sharedMaterials;
+
+            if (materials == null || materials.Length == 0)
+            {
                 return true;
+            }
+
+            foreach (Material material in materials)
+            {
+                if (material == null)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
-        return false;
-    }
-
-    static string GetPath(GameObject obj)
-    {
-        string path = obj.name;
-
-        while (obj.transform.parent != null)
+        private static string GetPath(GameObject gameObject)
         {
-            obj = obj.transform.parent.gameObject;
-            path = obj.name + "/" + path;
-        }
+            string path = gameObject.name;
+            Transform current = gameObject.transform;
 
-        return path;
+            while (current.parent != null)
+            {
+                current = current.parent;
+                path = current.name + "/" + path;
+            }
+
+            return path;
+        }
     }
 }
