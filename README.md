@@ -42,7 +42,7 @@ All under **Tools ▸ Unity Toolbox** in the menu bar.
 | **[ComponentCollapser](Editor/ComponentCollapser.cs)** | Auto-collapses every component on selection — sanity for objects with 20 components. |
 | **[EnterPlayModeToggle](Editor/EnterPlayModeToggle.cs)** | Flips Enter Play Mode Options on and off for fast iteration. |
 | **[VersionCodeAutoIncrement](Editor/VersionCodeAutoIncrement.cs)** | Bumps `bundleVersionCode` before Android App Bundle builds so every Play Console upload is unique. |
-| **[AutoConnectADB](Editor/AutoConnectADB.cs)** | Connect and disconnect wireless ADB devices from inside Unity. |
+| **[Wireless ADB](Editor/AdbWirelessDebuggerWindow.cs)** | Pair and connect an Android device over wireless debugging from one window. Reads the pairing and connect ports from mDNS, so you only type the 6-digit code. |
 | **[AssetMaterialAudit](Editor/AssetMaterialAudit.cs)** | Finds renderers with empty or missing material slots across open scenes **and** every prefab. |
 
 ### Samples
@@ -60,6 +60,27 @@ package can never break a project over a missing SDK.
 | [JSON Schema Migration](Samples~/JsonSchemaMigration/README.md) | Newtonsoft Json |
 | [Android Keystore Password Automation](Samples~/AndroidKeystorePasswords/README.md) | nothing — Windows `.bat` |
 | [Unity Library Cleaner](Samples~/UnityLibraryCleaner/README.md) | nothing — Windows `.bat` |
+
+## Wireless ADB pairing, without the terminal
+
+Android 11+ needs a one-time **pair** step on a *different* port than the connect
+port, which is why this normally means a terminal session and copying IP
+addresses by hand. This window folds the whole flow in:
+
+1. Open **Tools ▸ Unity Toolbox ▸ ADB ▸ Wireless Debugging…**
+2. On the phone: enable *Wireless debugging*, then tap **Pair device with pairing code**
+3. Type the six digits into Unity and press **Pair & Connect**
+
+While that pairing dialog is open the device advertises a temporary pairing port
+over `adb mdns services`, and the window reads both the pairing port and the
+connect port from it — so you never type an IP or a port. The code itself is never
+stored or logged.
+
+Once a device is paired, tick **Connect automatically when Unity starts** and it
+reconnects on editor load with no input at all.
+
+Requires **Android SDK platform-tools 30.0.2 or newer** (for `adb pair` and
+`adb mdns`). If your network blocks mDNS, both ports can be typed in manually.
 
 ---
 
@@ -111,6 +132,9 @@ sample carries its own README with setup steps.
   modules plus `com.unity.ugui`, which ships with every Unity project template.
 - `InteractiveParticleOrb` uses the legacy `Input` API. If your project is set to
   "Input System Package (New)" only, switch Active Input Handling to **Both**.
+- The Wireless ADB tool needs **Android SDK platform-tools 30.0.2+**. `adb` is
+  auto-detected from `ANDROID_HOME`, `ANDROID_SDK_ROOT`, the Android module
+  installed through Unity Hub, or `PATH`.
 
 ---
 

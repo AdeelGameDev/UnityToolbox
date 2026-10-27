@@ -9,6 +9,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [1.1.0] - 2026-10-27
+
+Wireless debugging no longer needs a terminal. The Android 11+ pairing step — a
+different port, a one-time six-digit code — is now handled inside the editor.
+
+### Added
+
+- **Wireless ADB window** (`Tools ▸ Unity Toolbox ▸ ADB ▸ Wireless Debugging…`)
+  that pairs and connects in one action.
+- **mDNS discovery**: the window reads the temporary pairing port and the connect
+  port from `adb mdns services`, so the only thing the user types is the six-digit
+  code shown on the phone.
+- **Connect automatically when Unity starts**, so a paired device reconnects on
+  editor load with no input.
+- `adb` auto-detection from `ANDROID_HOME`, `ANDROID_SDK_ROOT`, the Android module
+  bundled with the running Unity editor, and `PATH`.
+- Menu shortcuts: *Connect Now*, *Disconnect All*, *Restart ADB Server*.
+- A pass-through output pane showing every adb invocation and its result.
+
+### Changed
+
+- The ADB tool is no longer a settings window plus a fixed `host:port` string. It
+  discovers ports itself and remembers the last device between sessions.
+- Pairing codes are masked in the log and never written to `EditorPrefs`.
+- `adb` calls run with async output capture and a timeout, so a wedged device
+  cannot freeze the editor.
+
+### Removed
+
+- `Editor/AutoConnectADB.cs` and `Editor/AdbSettingsWindow.cs`, replaced by
+  `AdbWirelessDebuggerWindow`, `AdbCommandRunner` and `AdbAutoConnect`.
+
 ## [1.0.0] - 2026-10-27
 
 The first formalised release. Unity Toolbox is now an installable UPM package with
@@ -90,5 +122,6 @@ If you copied files into your own project before v1.0.0:
 | Menu items under `Tools/`, `Build/`, `DesignPatterns/` | `Tools/Unity Toolbox/…` |
 | Serialized field names on `ObjectPool` / `TimeManager` | Renamed, with `[FormerlySerializedAs]` preserving Inspector values |
 
-[Unreleased]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/AdeelGameDev/UnityToolbox/releases/tag/v1.0.0
