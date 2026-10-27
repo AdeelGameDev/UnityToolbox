@@ -81,13 +81,26 @@ jobs:
           done
           exit $status
 
-      - name: Every asset has a .meta file
+      - name: Every package asset has a .meta file
         run: |
+          # Unity writes a .meta for every asset it imports. A missing one means
+          # each machine regenerates its own GUID, which destabilises references.
           status=0
+
           for file in $(find Runtime Editor -type f ! -name '*.meta'); do
             if [ ! -f "$file.meta" ]; then
               echo "ERROR: missing $file.meta"
               status=1
             fi
           done
+
+          # Root-level assets Unity imports. Dot-files such as .gitignore are
+          # skipped because Unity ignores them.
+          for file in $(find . -maxdepth 1 -type f ! -name '.*' ! -name '*.meta'); do
+            if [ ! -f "$file.meta" ]; then
+              echo "ERROR: missing $file.meta"
+              status=1
+            fi
+          done
+
           exit $status
