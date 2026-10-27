@@ -29,6 +29,7 @@ namespace Adeel.UnityToolbox.EditorTools
         }
 
         private const string ScannedKey = "Adeel.UnityToolbox.Adb.ScannedThisSession";
+        private const string PairingCodeControl = "Adeel.UnityToolbox.Adb.PairingCodeField";
         private const int MaxLogLength = 12000;
 
         private static readonly StringBuilder LogBuilder = new StringBuilder();
@@ -143,25 +144,49 @@ namespace Adeel.UnityToolbox.EditorTools
                 SessionState.SetBool(ScannedKey, true);
                 EditorApplication.delayCall += RefreshDiscovery;
             }
+
+            // Put the caret straight in the code field — it is the point of the window.
+            EditorApplication.delayCall += () =>
+            {
+                if (this == null)
+                {
+                    return;
+                }
+
+                Focus();
+                EditorGUI.FocusTextInControl(PairingCodeControl);
+            };
         }
 
         private void OnGUI()
         {
-            EditorGUILayout.HelpBox(
-                "1.  Phone: Developer options → Wireless debugging → On\n" +
-                "2.  Phone: tap \"Pair device with pairing code\" and leave that dialog open\n" +
-                "3.  Type the six-digit code here and press Pair & Connect",
-                MessageType.Info);
+            // A fixed label width keeps the rows aligned and stops a wide
+            // TextField from pushing its neighbour out of the window.
+            float previousLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = 96f;
 
-            DrawDeviceFields();
-            EditorGUILayout.Space();
-            DrawActions();
-            EditorGUILayout.Space();
-            DrawAutoConnect();
-            EditorGUILayout.Space();
-            DrawLog();
-            EditorGUILayout.Space();
-            DrawAdbPath();
+            try
+            {
+                EditorGUILayout.HelpBox(
+                    "1.  Phone: Developer options → Wireless debugging → On\n" +
+                    "2.  Phone: tap \"Pair device with pairing code\" and leave that dialog open\n" +
+                    "3.  Type the six-digit code here and press Pair & Connect",
+                    MessageType.Info);
+
+                DrawDeviceFields();
+                EditorGUILayout.Space();
+                DrawActions();
+                EditorGUILayout.Space();
+                DrawAutoConnect();
+                EditorGUILayout.Space();
+                DrawLog();
+                EditorGUILayout.Space();
+                DrawAdbPath();
+            }
+            finally
+            {
+                EditorGUIUtility.labelWidth = previousLabelWidth;
+            }
         }
 
         private void DrawDeviceFields()
@@ -180,11 +205,25 @@ namespace Adeel.UnityToolbox.EditorTools
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                _pairingPort = EditorGUILayout.TextField("Pairing port", _pairingPort);
-                _pairingCode = EditorGUILayout.TextField("Code", _pairingCode, GUILayout.Width(150f));
+                _pairingPort = EditorGUILayout.TextField(
+                    new GUIContent(
+                        "Pairing port",
+                        "Shown in the \"Pair device with pairing code\" dialog. Changes every time that dialog opens."),
+                    _pairingPort,
+                    GUILayout.Width(200f));
+
+                _connectPort = EditorGUILayout.TextField(
+                    new GUIContent("Connect port", "Shown on the main Wireless debugging screen."),
+                    _connectPort,
+                    GUILayout.Width(200f));
             }
 
-            _connectPort = EditorGUILayout.TextField("Connect port", _connectPort);
+            // Full-width row: this is the only value the user actually has to type.
+            GUI.SetNextControlName(PairingCodeControl);
+
+            _pairingCode = EditorGUILayout.TextField(
+                new GUIContent("Pairing code", "The six digits shown in the pairing dialog on the phone."),
+                _pairingCode);
 
             if (!string.IsNullOrEmpty(_discoverySummary))
             {
@@ -229,9 +268,13 @@ namespace Adeel.UnityToolbox.EditorTools
         {
             bool autoConnect = EditorGUILayout.Toggle(
                 new GUIContent(
-                    "Connect automatically when Unity starts",
-                    "Finds the device over mDNS and connects on editor load. Needs no code once the device is paired."),
+                    "Auto-connect",
+                    "Finds the device over mDNS and connects when the editor loads. Needs no code once the device is paired."),
                 _autoConnect);
+
+            EditorGUILayout.LabelField(
+                "Connect automatically when Unity starts. Skipped quietly when the phone is off or on another network.",
+                EditorStyles.miniLabel);
 
             if (autoConnect != _autoConnect)
             {
