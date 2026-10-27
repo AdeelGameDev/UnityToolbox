@@ -9,6 +9,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 Nothing yet.
 
+## [1.2.0] - 2026-10-27
+
+One click from the editor to the phone. Building to a wireless device no longer
+goes through the Build Settings *Run Device* dropdown.
+
+### Added
+
+- **Build & Run on Device** — builds an APK, installs it over adb and launches the
+  app, in the Wireless ADB window and under
+  `Tools ▸ Unity Toolbox ▸ ADB ▸ Build & Run on Device`.
+- Live device resolution from `adb devices`, preferring the wireless device that
+  was last connected, with a clear message for an unauthorized or missing device.
+- Automatic switch to the Android build target when the project is on another one.
+
+### Why it bypasses the Run Device dropdown
+
+Unity's device list is populated and refreshed on its own schedule, and it is not
+settable through a public API in Unity 6 (`EditorUserBuildSettings` has no
+`activeAndroidDevice`). Worse, a wireless device's **port changes every time
+wireless debugging is turned on**, so a saved selection is stale by definition.
+Querying `adb devices` always reflects the live state, so there is nothing to select.
+
+### Changed
+
+- `App Build Support` (`.aab`) is temporarily disabled during a deploy build, since
+  `adb install` needs an APK. The previous setting is restored afterwards.
+
 ## [1.1.0] - 2026-10-27
 
 Wireless debugging no longer needs a terminal. The Android 11+ pairing step — a
@@ -122,6 +149,7 @@ If you copied files into your own project before v1.0.0:
 | Menu items under `Tools/`, `Build/`, `DesignPatterns/` | `Tools/Unity Toolbox/…` |
 | Serialized field names on `ObjectPool` / `TimeManager` | Renamed, with `[FormerlySerializedAs]` preserving Inspector values |
 
-[Unreleased]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/AdeelGameDev/UnityToolbox/releases/tag/v1.0.0

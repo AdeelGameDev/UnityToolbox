@@ -42,7 +42,7 @@ All under **Tools ▸ Unity Toolbox** in the menu bar.
 | **[ComponentCollapser](Editor/ComponentCollapser.cs)** | Auto-collapses every component on selection — sanity for objects with 20 components. |
 | **[EnterPlayModeToggle](Editor/EnterPlayModeToggle.cs)** | Flips Enter Play Mode Options on and off for fast iteration. |
 | **[VersionCodeAutoIncrement](Editor/VersionCodeAutoIncrement.cs)** | Bumps `bundleVersionCode` before Android App Bundle builds so every Play Console upload is unique. |
-| **[Wireless ADB](Editor/AdbWirelessDebuggerWindow.cs)** | Pair and connect an Android device over wireless debugging from one window. Reads the pairing and connect ports from mDNS, so you only type the 6-digit code. |
+| **[Wireless ADB](Editor/AdbWirelessDebuggerWindow.cs)** | Pair and connect an Android device over wireless debugging, then build and launch straight onto it. Reads ports from mDNS, so you only type the 6-digit code. |
 | **[AssetMaterialAudit](Editor/AssetMaterialAudit.cs)** | Finds renderers with empty or missing material slots across open scenes **and** every prefab. |
 
 ### Samples
@@ -76,8 +76,18 @@ over `adb mdns services`, and the window reads both the pairing port and the
 connect port from it — so you never type an IP or a port. The code itself is never
 stored or logged.
 
-Once a device is paired, tick **Connect automatically when Unity starts** and it
-reconnects on editor load with no input at all.
+Once a device is paired, tick **Auto-connect** and it reconnects on editor load
+with no input at all.
+
+Then **Build & Run on Device** builds an APK, installs it and launches it on the
+phone — one button, no Build Settings.
+
+> **Why not the Build Settings "Run Device" dropdown?** Unity refreshes that list on
+> its own schedule, it is not settable through a public API in Unity 6, and a
+> wireless device's **port changes every time wireless debugging is turned on**, so
+> a saved selection is stale by definition. Querying `adb devices` always reflects
+> the live state, so there is nothing to select. This is the closest thing to
+> "press one button, see it on the phone" that Unity allows.
 
 Requires **Android SDK platform-tools 30.0.2 or newer** (for `adb pair` and
 `adb mdns`). If your network blocks mDNS, both ports can be typed in manually.
