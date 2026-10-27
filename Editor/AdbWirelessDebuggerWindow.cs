@@ -96,6 +96,12 @@ namespace Adeel.UnityToolbox.EditorTools
             Debug.Log($"Wireless ADB: server restarted.{Environment.NewLine}{result.Combined}");
         }
 
+        [MenuItem("Tools/Unity Toolbox/ADB/Build & Run on Device", priority = 5)]
+        private static void BuildAndRunOnDevice()
+        {
+            AdbDeviceDeployer.BuildAndRun(message => Debug.Log($"Wireless ADB: {message}"));
+        }
+
         /// <summary>
         /// Connects to the last known device using mDNS to refresh the port. Used by
         /// <see cref="AdbAutoConnect"/> when the editor starts.
@@ -261,6 +267,17 @@ namespace Adeel.UnityToolbox.EditorTools
 
             EditorGUILayout.LabelField(
                 "Pairing is needed once per device. After that, \"Connect Only\" is enough — and the code is never needed again.",
+                EditorStyles.miniLabel);
+
+            EditorGUILayout.Space();
+
+            if (GUILayout.Button("Build & Run on Device", GUILayout.Height(28f)))
+            {
+                AdbDeviceDeployer.BuildAndRun(Append);
+            }
+
+            EditorGUILayout.LabelField(
+                "Builds an APK, installs it and launches it on the connected device — no Run Device dropdown, no stale ports.",
                 EditorStyles.miniLabel);
         }
 
