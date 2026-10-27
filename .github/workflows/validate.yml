@@ -1,0 +1,106 @@
+name: Validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  structure:
+    name: Package structure
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate package.json
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            const required = ['name', 'version', 'displayName', 'description', 'unity', 'author'];
+            const missing = required.filter((key) => !pkg[key]);
+            if (missing.length) {
+              console.error('package.json is missing: ' + missing.join(', '));
+              process.exit(1);
+            }
+            if (!/^com\.[a-z0-9]+\./.test(pkg.name)) {
+              console.error('package name must follow com.company.package: ' + pkg.name);
+              process.exit(1);
+            }
+            console.log('package.json OK: ' + pkg.name + '@' + pkg.version);
+          "
+
+      - name: Validate sample paths
+        run: |
+          node -e "
+            const fs = require('fs');
+            const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+            let failed = false;
+            for (const sample of pkg.samples || []) {
+              const ok = fs.existsSync(sample.path) && fs.statSync(sample.path).isDirectory();
+              console.log((ok ? 'OK   ' : 'MISS ') + sample.path);
+              if (!ok) failed = true;
+            }
+            process.exit(failed ? 1 : 0);
+          "
+
+      - name: Editor APIs must stay out of Runtime
+        run: |
+          # A file under Runtime/ that references UnityEditor compiles in the
+          # editor and breaks the player build. This is the check that matters most.
+          if grep -rn --include='*.cs' -E '^\s*using\s+UnityEditor' Runtime/; then
+            echo ""
+            echo "ERROR: UnityEditor is referenced from Runtime/. Move the file to Editor/."
+            exit 1
+          fi
+          echo "OK: no UnityEditor references in Runtime/."
+
+      - name: Every script needs a .cs extension
+        run: |
+          # Unity only compiles files ending in .cs; extensionless scripts are dead weight.
+          found=$(find Runtime Editor -type f ! -name '*.cs' ! -name '*.asmdef' ! -name '*.meta' -print)
+          if [ -n "$found" ]; then
+            echo "ERROR: unexpected files in the package folders:"
+            echo "$found"
+            exit 1
+          fi
+          echo "OK: Runtime/ and Editor/ contain only .cs, .asmdef and .meta files."
+
+      - name: Class name must match file name
+        run: |
+          # Unity cannot bind a MonoBehaviour whose class name differs from its file.
+          status=0
+          for file in $(find Runtime Editor -name '*.cs'); do
+            base=$(basename "$file" .cs)
+            if ! grep -qE "class[[:space:]]+$base([[:space:]:<]|$)" "$file"; then
+              echo "ERROR: $file does not declare a class named $base"
+              status=1
+            fi
+          done
+          exit $status
+
+      - name: Every package asset has a .meta file
+        run: |
+          # Unity writes a .meta for every asset it imports. A missing one means
+          # each machine regenerates its own GUID, which destabilises references.
+          status=0
+
+          for file in $(find Runtime Editor -type f ! -name '*.meta'); do
+            if [ ! -f "$file.meta" ]; then
+              echo "ERROR: missing $file.meta"
+              status=1
+            fi
+          done
+
+          # Root-level assets Unity imports. Dot-files such as .gitignore are
+          # skipped because Unity ignores them.
+          for file in $(find . -maxdepth 1 -type f ! -name '.*' ! -name '*.meta'); do
+            if [ ! -f "$file.meta" ]; then
+              echo "ERROR: missing $file.meta"
+              status=1
+            fi
+          done
+
+          exit $status

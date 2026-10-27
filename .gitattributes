@@ -1,0 +1,25 @@
+# Normalise line endings so the package behaves identically on every platform.
+# LF everywhere, except Windows batch files, which cmd.exe parses more reliably
+# with CRLF.
+
+* text=auto eol=lf
+
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Unity YAML assets: text, but never diff them merge-conflict style.
+*.prefab text eol=lf
+*.unity text eol=lf
+*.asmdef text eol=lf
+*.meta text eol=lf
+
+# Binary
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.gif binary
+*.psd binary
+*.unitypackage binary
+*.dll binary
+*.keystore binary
+*.jks binary

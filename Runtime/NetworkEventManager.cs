@@ -2,108 +2,137 @@ using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
-public class NetworkEventManager : SingletonPersistent<NetworkEventManager>
+namespace Adeel.UnityToolbox
 {
-    public static event Action OnNetworkDisconnected;
-    public static event Action OnNetworkConnected;
-
-    [SerializeField] private string pingTarget = "8.8.8.8";
-    [SerializeField] private float checkInterval = 5f;
-    [SerializeField] private float maxPingTime = 1000f;
-    [SerializeField] private bool isOnline = false;
-
-    private bool manualCheck = false;
-    private bool checkingNetwork = false;
-
-
-    private async void Start()
+    /// <summary>
+    /// Polls connectivity on an interval, verifies it with a ping, and raises
+    /// <see cref="OnNetworkConnected"/> / <see cref="OnNetworkDisconnected"/> on
+    /// transitions. Survives scene loads.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="UnityEngine.Ping"/> is not supported on every platform (WebGL in
+    /// particular), so treat the result as a quality hint rather than a guarantee.
+    /// </remarks>
+    public class NetworkEventManager : SingletonPersistent<NetworkEventManager>
     {
-        await Task.Delay(1000);
-        CheckNetworkStatusManual();
-        InvokeRepeating(nameof(CheckNetworkStatus), checkInterval, checkInterval);
-    }
+        /// <summary>Raised when connectivity is lost.</summary>
+        public static event Action OnNetworkDisconnected;
 
-    public void CheckNetworkStatusManual()
-    {
-        manualCheck = true;
-        CheckNetworkStatus();
-    }
+        /// <summary>Raised when connectivity is restored.</summary>
+        public static event Action OnNetworkConnected;
 
-    public async void CheckNetworkStatus()
-    {
-        if (checkingNetwork && !manualCheck)
-            return; // Skip if already checking
+        [Tooltip("Host used to measure round-trip time.")]
+        [SerializeField] private string pingTarget = "8.8.8.8";
 
-        checkingNetwork = true;
+        [Tooltip("Seconds between automatic checks.")]
+        [Min(1f)]
+        [SerializeField] private float checkInterval = 5f;
 
-        NetworkReachability reachability = Application.internetReachability;
+        [Tooltip("Ping times above this (in milliseconds) count as a poor connection.")]
+        [SerializeField] private float maxPingTime = 1000f;
 
-        if (reachability == NetworkReachability.NotReachable)
+        [SerializeField] private bool isOnline;
+
+        private bool _manualCheck;
+        private bool _checkingNetwork;
+
+        private async void Start()
         {
-            HandleOffline();
-        }
-        else
-        {
-            await CheckNetworkQuality();
+            await Task.Delay(1000);
+            CheckNetworkStatusManual();
+            InvokeRepeating(nameof(CheckNetworkStatus), checkInterval, checkInterval);
         }
 
-        checkingNetwork = false;
-    }
-
-    private void HandleOffline()
-    {
-        if (isOnline || manualCheck)
+        /// <summary>Forces an immediate check, even if one is already running.</summary>
+        public void CheckNetworkStatusManual()
         {
-            Debug.Log("Offline");
-            OnNetworkDisconnected?.Invoke();
-            isOnline = false;
-            manualCheck = false;
+            _manualCheck = true;
+            CheckNetworkStatus();
         }
-    }
 
-    private async Task CheckNetworkQuality()
-    {
-        Ping ping = new Ping(pingTarget);
-        float startTime = Time.time;
-
-        while (!ping.isDone)
+        /// <summary>Runs a reachability + ping check. Safe to call repeatedly.</summary>
+        public async void CheckNetworkStatus()
         {
-            if (Time.time - startTime > 2f) // Adjust timeout threshold as needed
+            if (_checkingNetwork && !_manualCheck)
             {
-                Debug.Log("Ping timeout");
-                HandleOffline();
-                ping.DestroyPing();
                 return;
             }
-            await Task.Yield();
+
+            _checkingNetwork = true;
+
+            try
+            {
+                if (Application.internetReachability == NetworkReachability.NotReachable)
+                {
+                    HandleOffline();
+                    return;
+                }
+
+                await CheckNetworkQuality();
+            }
+            finally
+            {
+                _checkingNetwork = false;
+            }
         }
 
-        if (ping.time <= maxPingTime)
+        private void HandleOffline()
         {
-            HandleOnline();
-        }
-        else
-        {
-            Debug.Log("Poor connection");
-            HandleOffline();
+            if (!isOnline && !_manualCheck)
+            {
+                return;
+            }
+
+            Debug.Log("Network: offline");
+            isOnline = false;
+            _manualCheck = false;
+            OnNetworkDisconnected?.Invoke();
         }
 
-        ping.DestroyPing();
-    }
-
-    private void HandleOnline()
-    {
-        if (!isOnline || manualCheck)
+        private void HandleOnline()
         {
-            Debug.Log("Online");
-            OnNetworkConnected?.Invoke();
+            if (isOnline && !_manualCheck)
+            {
+                return;
+            }
+
+            Debug.Log("Network: online");
             isOnline = true;
-            manualCheck = false;
-
+            _manualCheck = false;
+            OnNetworkConnected?.Invoke();
         }
+
+        private async Task CheckNetworkQuality()
+        {
+            Ping ping = new Ping(pingTarget);
+            float startTime = Time.time;
+
+            while (!ping.isDone)
+            {
+                if (Time.time - startTime > 2f)
+                {
+                    HandleOffline();
+                    ping.DestroyPing();
+                    return;
+                }
+
+                await Task.Yield();
+            }
+
+            if (ping.time <= maxPingTime)
+            {
+                HandleOnline();
+            }
+            else
+            {
+                Debug.Log($"Network: poor connection ({ping.time} ms)");
+                HandleOffline();
+            }
+
+            ping.DestroyPing();
+        }
+
+        /// <summary>The last known connectivity state.</summary>
+        public bool IsOnline() => isOnline;
     }
-
-    public bool IsOnline() => isOnline;
 }
-
-

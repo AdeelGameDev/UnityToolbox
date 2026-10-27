@@ -1,16 +1,55 @@
-﻿using UnityEngine;
+using UnityEngine;
 
-public class PerformanceManager : MonoBehaviour
+namespace Adeel.UnityToolbox
 {
-    private void Awake()
+    /// <summary>
+    /// Applies project-wide frame-rate and power settings once at startup.
+    /// Attach to a single bootstrap <see cref="GameObject"/> in your first scene.
+    /// </summary>
+    /// <remarks>
+    /// Disabling VSync is required for <see cref="Application.targetFrameRate"/>
+    /// to have any effect on mobile and desktop platforms.
+    /// </remarks>
+    public class PerformanceManager : MonoBehaviour
     {
-        // Disable VSync to allow manual frame rate control
-        QualitySettings.vSyncCount = 0;
+        [Tooltip("Turn off VSync so the target frame rate can be enforced.")]
+        [SerializeField] private bool disableVSync = true;
 
-        // Lock the game to 60 FPS
-        Application.targetFrameRate = 60;
+        [Tooltip("Frame rate to aim for. -1 leaves the platform default untouched.")]
+        [SerializeField] private int targetFrameRate = 60;
 
-        // Prevent the device from going to sleep
-        Screen.sleepTimeout = SleepTimeout.NeverSleep;
+        [Tooltip("Stops the screen from dimming or sleeping during play.")]
+        [SerializeField] private bool preventScreenSleep = true;
+
+        private void Awake()
+        {
+            Apply();
+        }
+
+        /// <summary>Applies every configured setting immediately.</summary>
+        public void Apply()
+        {
+            if (disableVSync)
+            {
+                QualitySettings.vSyncCount = 0;
+            }
+
+            if (targetFrameRate > 0)
+            {
+                Application.targetFrameRate = targetFrameRate;
+            }
+
+            if (preventScreenSleep)
+            {
+                Screen.sleepTimeout = SleepTimeout.NeverSleep;
+            }
+        }
+
+        /// <summary>Changes the target frame rate at runtime and applies it.</summary>
+        public void SetTargetFrameRate(int framesPerSecond)
+        {
+            targetFrameRate = framesPerSecond;
+            Application.targetFrameRate = framesPerSecond;
+        }
     }
 }

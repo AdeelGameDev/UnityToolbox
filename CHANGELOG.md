@@ -1,0 +1,94 @@
+# Changelog
+
+All notable changes to this project are documented here.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/)
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+Nothing yet.
+
+## [1.0.0] - 2026-10-27
+
+The first formalised release. Unity Toolbox is now an installable UPM package with
+`Runtime` and `Editor` assembly definitions instead of a folder of loose scripts.
+
+### Added
+
+- `package.json` and assembly definitions (`Adeel.UnityToolbox.Runtime`,
+  `Adeel.UnityToolbox.Editor`) so the repository can be installed through the
+  Package Manager via a git URL.
+- `.gitignore` for Unity, plus entries for keystore files and local secret files.
+- `CHANGELOG.md`, `CONTRIBUTING.md` and a CI workflow that validates the package
+  structure on every push.
+- Namespaces `Adeel.UnityToolbox` and `Adeel.UnityToolbox.EditorTools`.
+- `ObjectPool.Return` and `ObjectPool.ReturnAll`.
+- `TimeManager.StopSlowMo` and a `DoSlowMo(float)` overload.
+- `PerformanceManager.SetTargetFrameRate` and Inspector-exposed settings.
+- `FPSCounterController.CurrentFps` and an adjustable refresh interval.
+- `AutoConnectADB` settings window with automatic ADB path detection.
+- Per-sample READMEs with setup instructions.
+
+### Changed
+
+- `Runtime/` and `Editor/` are now separate assemblies; editor tooling no longer
+  compiles into player builds.
+- All editor tools moved under the **Tools ▸ Unity Toolbox** menu path.
+- `SlowMoTime` is now `TimeManager.cs` (the class was already `TimeManager`).
+- `AnchorSmartFixer` now accounts for the parent's pivot, so anchors are chosen
+  correctly when the parent is not centred.
+- `SceneBootstrapper` uses prefixed `EditorPrefs` keys, guards against an empty
+  Build Settings list, and no longer restores a deleted scene.
+- `FPSCounterController` refreshes its label a few times per second instead of
+  every frame, and exposes `targetFrameRate` in the Inspector.
+- `AutoConnectADB` no longer runs on editor load, so it cannot log an error before
+  it has been configured.
+- `NetworkEventManager` logs are prefixed `Network:` and the in-flight flag is
+  always reset.
+
+### Fixed
+
+- **Player builds broke** when `AnchorSmartFixer` and `SceneBootstrapper` shipped
+  under `Runtime/` while referencing `UnityEditor`. Both are now in `Editor/`.
+- **`Runtime/ObjectPool`, `Runtime/SlowMoTime` and `Runtime/World To Screen Position`
+  were missing their `.cs` extension**, so Unity never compiled them.
+- `Singleton<T>` overwrote `Instance` with the duplicate it was destroying, and
+  `SingletonPersistent<T>` called `DontDestroyOnLoad` on a destroyed object.
+- `TimeManager` left `Time.fixedDeltaTime` scaled after the slow-motion effect,
+  which made physics permanently mismatched.
+- `ObjectPool` threw a `NullReferenceException` when every instance was in use.
+- `QRCodeScanner` threw on devices without a camera instead of logging a warning.
+- `PinchScrollDetection` leaked its `InputAction` instances and zoomed on a single
+  touch.
+- `JsonConverter` collided with `Newtonsoft.Json.JsonConverter`; the sample class is
+  now `JsonSchemaMigration` and is wrapped in `#if UNITY_EDITOR`.
+- `LaunchUnity.bat` no longer ships with a password value in the file.
+
+### Removed
+
+- `Runtime/World To Screen Position` — an incomplete code fragment with no class,
+  no `using` directives and undefined members (`overLayCamera`, `canvas_rect`,
+  `DOJumpAnchorPos`). It could never compile; see the DOTween/anchor snippets in
+  the issues if you need that behaviour.
+- `DevTools/Another File/New Text Document.txt` — an empty file.
+- `Packages/FPSCounterController/` — duplicated documentation (one copy pointed at
+  a non-existent image) and a `.unitypackage` blob.
+- `Runtime/FirebaseManager.cs`, `Runtime/QRCodeScanner.cs`,
+  `Runtime/PinchScrollDetection.cs` and `Extensions/JsonConverter.cs` moved to
+  `Samples~/`, because each needs a third-party package the core must not require.
+
+### Breaking changes
+
+If you copied files into your own project before v1.0.0:
+
+| Before | Now |
+|---|---|
+| Global namespace types (`Singleton`, `ObjectPool`, `TimeManager`, …) | `Adeel.UnityToolbox.*` — add `using Adeel.UnityToolbox;` |
+| `Runtime/AnchorSmartFixer.cs`, `Runtime/SceneBootstrapper.cs` | `Editor/` |
+| `SlowMoTime` file | `TimeManager.cs` (same class name) |
+| Menu items under `Tools/`, `Build/`, `DesignPatterns/` | `Tools/Unity Toolbox/…` |
+| Serialized field names on `ObjectPool` / `TimeManager` | Renamed, with `[FormerlySerializedAs]` preserving Inspector values |
+
+[Unreleased]: https://github.com/AdeelGameDev/UnityToolbox/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/AdeelGameDev/UnityToolbox/releases/tag/v1.0.0

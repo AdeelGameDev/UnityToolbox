@@ -1,12 +1,34 @@
 using UnityEditor;
 using UnityEngine;
 
-public class EnterPlayModeToggle : EditorWindow
+namespace Adeel.UnityToolbox.EditorTools
 {
-    [MenuItem("Tools/Toggle Enter Play Mode Options _F1")] // Change _F1 to any key you prefer
-    private static void ToggleEnterPlayModeOptions()
+    /// <summary>
+    /// Flips <see cref="EditorSettings.enterPlayModeOptionsEnabled"/> on and off.
+    /// </summary>
+    /// <remarks>
+    /// Disabling domain reload makes entering Play mode much faster at the cost of
+    /// keeping static state between runs — handy while iterating, but turn it back
+    /// on before trusting a build.
+    /// </remarks>
+    public static class EnterPlayModeToggle
     {
-        EditorSettings.enterPlayModeOptionsEnabled = !EditorSettings.enterPlayModeOptionsEnabled;
-        Debug.Log($"Enter Play Mode Options: {(EditorSettings.enterPlayModeOptionsEnabled ? "Enabled" : "Disabled")}");
+        [MenuItem("Tools/Unity Toolbox/Toggle Enter Play Mode Options")]
+        private static void ToggleEnterPlayModeOptions()
+        {
+            EditorSettings.enterPlayModeOptionsEnabled = !EditorSettings.enterPlayModeOptionsEnabled;
+
+            Debug.Log(EditorSettings.enterPlayModeOptionsEnabled
+                ? "Enter Play Mode Options: enabled (domain reload will be skipped)"
+                : "Enter Play Mode Options: disabled (full domain reload)");
+        }
+
+        [MenuItem("Tools/Unity Toolbox/Toggle Enter Play Mode Options", true)]
+        private static bool ValidateToggleEnterPlayModeOptions()
+        {
+            Menu.SetChecked("Tools/Unity Toolbox/Toggle Enter Play Mode Options",
+                EditorSettings.enterPlayModeOptionsEnabled);
+            return true;
+        }
     }
 }

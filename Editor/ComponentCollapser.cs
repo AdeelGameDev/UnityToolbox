@@ -1,56 +1,65 @@
 using UnityEditor;
 
-[InitializeOnLoad]
-public class ComponentCollapser
+namespace Adeel.UnityToolbox.EditorTools
 {
-    private const string MENU_PATH = "Tools/Auto Collapse Components";
-    private static bool _enabled;
-
-    static ComponentCollapser()
+    /// <summary>
+    /// When enabled, collapses every component on the object you select in the
+    /// Hierarchy so the Inspector shows only the headers.
+    /// </summary>
+    /// <remarks>
+    /// The toggle state is persisted in <see cref="EditorPrefs"/>, so it survives
+    /// editor restarts. Useful when working with objects that carry many
+    /// components.
+    /// </remarks>
+    [InitializeOnLoad]
+    public static class ComponentCollapser
     {
-        _enabled = EditorPrefs.GetBool(MENU_PATH, false);
-        SetHandler(_enabled);
-        EditorApplication.delayCall += () => Menu.SetChecked(MENU_PATH, _enabled);
-    }
+        private const string MenuPath = "Tools/Unity Toolbox/Auto Collapse Components";
+        private const string PreferenceKey = "Adeel.UnityToolbox.ComponentCollapser.Enabled";
 
-    [MenuItem(MENU_PATH)]
-    private static void Toggle()
-    {
-        _enabled = !_enabled;
-        Menu.SetChecked(MENU_PATH, _enabled);
-        EditorPrefs.SetBool(MENU_PATH, _enabled);
-        SetHandler(_enabled);
-    }
+        private static bool _enabled;
 
-    private static void SetHandler(bool enable)
-    {
-        if (enable)
+        static ComponentCollapser()
         {
-            Selection.selectionChanged += CollapseComponents;
+            _enabled = EditorPrefs.GetBool(PreferenceKey, false);
+            ApplyHandler(_enabled);
+            EditorApplication.delayCall += () => Menu.SetChecked(MenuPath, _enabled);
         }
-        else
+
+        [MenuItem(MenuPath)]
+        private static void Toggle()
+        {
+            _enabled = !_enabled;
+            EditorPrefs.SetBool(PreferenceKey, _enabled);
+            Menu.SetChecked(MenuPath, _enabled);
+            ApplyHandler(_enabled);
+        }
+
+        private static void ApplyHandler(bool enable)
         {
             Selection.selectionChanged -= CollapseComponents;
+
+            if (enable)
+            {
+                Selection.selectionChanged += CollapseComponents;
+            }
         }
-    }
 
-    private static void CollapseComponents()
-    {
-        if (Selection.activeGameObject == null || Selection.count > 1) return;
-
-        // Get the ActiveEditorTracker for the current selection
-        var tracker = ActiveEditorTracker.sharedTracker;
-
-        // Force the tracker to rebuild
-        tracker.ForceRebuild();
-
-        // Iterate through all the editors and set their expanded state to false
-        for (int i = 0; i < tracker.activeEditors.Length; i++)
+        private static void CollapseComponents()
         {
-            // Skip the first component (GameObject component)
-            if (i == 0) continue;
+            if (Selection.activeGameObject == null || Selection.count > 1)
+            {
+                return;
+            }
 
-            tracker.SetVisible(i, 0); // Collapse the component
+            ActiveEditorTracker tracker = ActiveEditorTracker.sharedTracker;
+            tracker.ForceRebuild();
+
+            // Index 0 is the GameObject's own header — leave it expanded.
+            for (int i = 1; i < tracker.activeEditors.Length; i++)
+            {
+                tracker.SetVisible(i, 0);
+            }
         }
     }
 }
